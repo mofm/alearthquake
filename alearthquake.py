@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 
 config = configparser.ConfigParser()
-config.read('./alearthquake.ini')
+config.read('./alearthquake1.ini')
 
 r = requests.get('http://www.koeri.boun.edu.tr/scripts/lst0.asp')
 
@@ -48,22 +48,22 @@ def lastquake_line(lastquake):
 
 
 def bycoordinates(latitude, longitude, magnitude, lastline=506):
-    latitude_pattern = re.compile('^(%s.*)\s(%s)' % (latitude, longitude))
+    la_pattern = re.compile('^(%s.*)\s(%s)' % (latitude, longitude))
     for nr, i in enumerate(lines):
         if 7 <= nr <= lastline:
             i_split = i.split()
             new_line = i_split[2] + ' ' + i_split[3]
-            if latitude_pattern.search(new_line) and float(i_split[6]) >= magnitude:
+            if la_pattern.search(new_line) and float(i_split[6]) >= magnitude:
                 print(i)
 
 
 def byregion(region, magnitude, lastline=506):
-    region_pattern = re.compile('.*(%s).*' % region)
+    rg_pattern = re.compile('.*(%s).*' % region)
     for nr, i in enumerate(lines):
         if 7 <= nr <= lastline:
             i_split = i.split()
             new_line = i_split[8] + ' ' + i_split[9]
-            if region_pattern.search(new_line) and float(i_split[6]) >= magnitude:
+            if rg_pattern.search(new_line) and float(i_split[6]) >= magnitude:
                 print(i)
 
 
