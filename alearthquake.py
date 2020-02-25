@@ -31,13 +31,11 @@ def ktimestamp():
 
     with open(CONFIG['tracker']['tracker_file'], 'r+') as file:
         last = float(file.readline())
-        if last == lastquake:
-            exit()
-        else:
+        if last != lastquake:
             file.seek(0)
             file.write('%s' % lastquake)
             file.truncate()
-            return last
+            print(last)
 
 
 def lastquake_line(lastquake):
@@ -48,6 +46,7 @@ def lastquake_line(lastquake):
     for nr2, i in enumerate(LINES):
         if dt_pattern.search(i):
             return nr2
+        return None
 
 
 def bycoordinates(latitude, longitude, magnitude, lastline=506):
@@ -85,11 +84,7 @@ This message is sent from Python."""
             server.login(CONFIG['mail']['username'], CONFIG['mail']['password'])
             server.sendmail(CONFIG['notification']['sender_mail'], CONFIG['notification']['receiver_mail'], message)
             print('Success')
-    except Exception as e:
-        print(e)
+    except Exception as exp:
+        print(exp)
     finally:
         server.quit()
-
-
-a = ktimestamp()
-lastquake_line(a)
