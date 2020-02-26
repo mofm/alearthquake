@@ -5,6 +5,8 @@ import smtplib
 import ssl
 from datetime import datetime
 
+from email.mime.text import MIMEText
+from email.utils import formatdate, make_msgid
 import requests
 from bs4 import BeautifulSoup
 
@@ -71,20 +73,22 @@ def byregion(region, magnitude, lastline=506):
                 print(i)
 
 
-def send_notification():
+def send_notification(message):
     """mail notification function"""
-    message = """\
-Subject: Hi there
-
-This message is sent from Python."""
+    msg = MIMEText(message)
+    msg['Date'] = formatdate(localtime=True)
+    msg['Message-ID'] = make_msgid()
+    msg['Subject'] = CONFIG['notification']['subject']
+    msg['From'] = CONFIG['notification']['sender_mail']
+    msg['To'] = CONFIG['notification']['receiver_mail']
     context = ssl.create_default_context()
     try:
         with smtplib.SMTP(CONFIG['mail']['smtp_server'], CONFIG['mail']['port']) as server:
             server.starttls(context=context)
             server.login(CONFIG['mail']['username'], CONFIG['mail']['password'])
-            server.sendmail(CONFIG['notification']['sender_mail'], CONFIG['notification']['receiver_mail'], message)
-            print('Success')
-    except Exception as exp:
-        print(exp)
+            server.sendmail(msg['From'], msg['To'], msg.as_string())
+            print('Sent')
+    except smtplib.SMTPException as exp:
+        print('SMTP error occurred: ' + str(exp))
     finally:
-        server.quit()
+        server.close()
