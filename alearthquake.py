@@ -11,7 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 
 CONFIG = configparser.ConfigParser()
-CONFIG.read('./alearthquake1.ini')
+CONFIG.read('./alearthquake.ini')
 
 REQ = requests.get('http://www.koeri.boun.edu.tr/scripts/lst0.asp')
 
@@ -37,44 +37,50 @@ def ktimestamp():
             file.seek(0)
             file.write('%s' % lastquake)
             file.truncate()
-            print(last)
+            return last
+    return None
 
 
-def lastquake_line(lastquake):
+def lastquake_line(checkdate):
     """find previously checked last line"""
-    dt_convert = datetime.fromtimestamp(lastquake)
+    dt_convert = datetime.fromtimestamp(checkdate)
     dt_format = datetime.strftime(dt_convert, '%Y.%m.%d %H:%M:%S', )
     dt_pattern = re.compile('^%s.*' % dt_format)
     for nr2, i in enumerate(LINES):
         if dt_pattern.search(i):
             return nr2
-        return None
+    return None
 
 
 def bycoordinates(latitude, longitude, magnitude, lastline=506):
     """find last earthquakes by coordinates"""
     la_pattern = re.compile(r'^(%s.*)\s(%s)' % (latitude, longitude))
+    results = []
     for nr3, i in enumerate(LINES):
         if 7 <= nr3 <= lastline:
             i_split = i.split()
             new_line = i_split[2] + ' ' + i_split[3]
-            if la_pattern.search(new_line) and float(i_split[6]) >= magnitude:
-                print(i)
+            if la_pattern.search(new_line) and float(i_split[6]) >= float(magnitude):
+                results.append(i)
+    return results
 
 
 def byregion(region, magnitude, lastline=506):
     """find last earthquakes by region"""
     rg_pattern = re.compile('.*(%s).*' % region)
+    results = []
     for nr4, i in enumerate(LINES):
         if 7 <= nr4 <= lastline:
             i_split = i.split()
             new_line = i_split[8] + ' ' + i_split[9]
-            if rg_pattern.search(new_line) and float(i_split[6]) >= magnitude:
-                print(i)
+            if rg_pattern.search(new_line) and float(i_split[6]) >= float(magnitude):
+                results.append(i)
+    return results
 
 
 def send_notification(message):
     """mail notification function"""
+    message = '\n'.join(message)
     msg = MIMEText(message)
     msg['Date'] = formatdate(localtime=True)
     msg['Message-ID'] = make_msgid()
@@ -92,3 +98,24 @@ def send_notification(message):
         print('SMTP error occurred: ' + str(exp))
     finally:
         server.close()
+
+
+def main():
+    """check new earthquakes and send mail notifications"""
+    find_date = ktimestamp()
+    if find_date is not None:
+        line_number = lastquake_line(find_date)
+        if CONFIG['track_base']['base'] == 'coordinates':
+            messages = bycoordinates(CONFIG['coordinates']['latitude'],
+                                     CONFIG['coordinates']['longitude'],
+                                     CONFIG['scale']['magnitude'],
+                                     line_number)
+            send_notification(messages)
+        elif CONFIG['track_base']['base'] == 'region':
+            messages = byregion(CONFIG['region']['region_name'],
+                                CONFIG['scale']['magnitude'], line_number)
+            send_notification(messages)
+
+
+if __name__ == "__main__":
+    main()
