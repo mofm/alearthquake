@@ -110,10 +110,12 @@ def main():
                                      CONFIG['coordinates']['longitude'],
                                      CONFIG['scale']['magnitude'],
                                      line_number)
+            assert len(messages) != 0, "No new message"
             send_notification(messages)
         elif CONFIG['track_base']['base'] == 'region':
             messages = byregion(CONFIG['region']['region_name'],
                                 CONFIG['scale']['magnitude'], line_number)
+            assert len(messages) != 0, "No new message"
             send_notification(messages)
 
 
