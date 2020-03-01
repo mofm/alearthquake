@@ -92,7 +92,7 @@ def send_notification(message):
         with smtplib.SMTP(CONFIG['mail']['smtp_server'], CONFIG['mail']['port']) as server:
             server.starttls(context=context)
             server.login(CONFIG['mail']['username'], CONFIG['mail']['password'])
-            server.sendmail(msg['From'], msg['To'], msg.as_string())
+            server.sendmail(msg['From'], msg['To'].split(', '), msg.as_string())
             print('Sent')
     except smtplib.SMTPException as exp:
         print('SMTP error occurred: ' + str(exp))
